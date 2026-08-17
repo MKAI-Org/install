@@ -7,7 +7,7 @@
 下脚本（不含安装包）：
 
 ```powershell
-curl.exe -L -o install.zip https://dl.mkstore.life/install.zip
+curl.exe -L -o install.zip https://dl.mkstore.life/scripts.zip
 tar -xf install.zip
 cd install
 ```

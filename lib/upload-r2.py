@@ -249,9 +249,20 @@ def upload_scripts_zip() -> None:
         access,
         secret,
         content_type="application/zip",
-        cache_control="public, max-age=60",
+        cache_control="no-cache, no-store, must-revalidate",
     )
     print(f"    {public.rstrip('/')}/install.zip")
+    put_object(
+        host,
+        bucket,
+        "scripts.zip",
+        dest,
+        access,
+        secret,
+        content_type="application/zip",
+        cache_control="no-cache, no-store, must-revalidate",
+    )
+    print(f"    {public.rstrip('/')}/scripts.zip")
 
 
 def main() -> None:
