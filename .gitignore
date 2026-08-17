@@ -4,3 +4,4 @@
 !**/packages/.gitkeep
 /install.zip
 /dist/
+__pycache__/
