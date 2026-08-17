@@ -140,10 +140,19 @@ function MkEnsurePackage {
     return $hit
   }
   $dest = Join-Path $Root "$App\packages\$File"
-  $all = @((MkR2Url $App $File) + @($Urls))
-  $ok = MkDownload -Dest $dest -Urls $all
+  $ok = MkDownload -Dest $dest -Urls (MkJoinUrls (MkR2Url $App $File) $Urls)
   if (-not $ok) { return $null }
   return $dest
+}
+
+function MkJoinUrls {
+  $all = New-Object System.Collections.Generic.List[string]
+  foreach ($item in $args) {
+    foreach ($u in @($item)) {
+      if ($u) { $all.Add([string]$u) }
+    }
+  }
+  return $all.ToArray()
 }
 
 function MkGitHubUrls([string]$Path) {

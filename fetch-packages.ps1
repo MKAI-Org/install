@@ -26,7 +26,7 @@ foreach ($asset in @(
     'codex-windows-sandbox-setup-x86_64-pc-windows-msvc.exe.zip'
   )) {
   $rel = "openai/codex/releases/download/$tag/$asset"
-  Pull (Join-Path $Root "codex\packages\$asset") (@((MkR2Url 'codex' $asset) + (MkGitHubUrls $rel)))
+  Pull (Join-Path $Root "codex\packages\$asset") (MkJoinUrls (MkR2Url 'codex' $asset) (MkGitHubUrls $rel))
 }
 
 $gcs = $v['CLAUDE_GCS']
@@ -50,7 +50,7 @@ Pull (Join-Path $Root "node\packages\$nodeZip") @(
 $gv = $v['GIT_MINGIT_VERSION']
 $zipName = "MinGit-$gv-64-bit.zip"
 $grel = "git-for-windows/git/releases/download/v$gv.windows.1/$zipName"
-Pull (Join-Path $Root "git\packages\$zipName") (@((MkR2Url 'git' $zipName) + (MkGitHubUrls $grel)))
+Pull (Join-Path $Root "git\packages\$zipName") (MkJoinUrls (MkR2Url 'git' $zipName) (MkGitHubUrls $grel))
 
 Pull (Join-Path $Root 'vcredist\packages\vc_redist.x64.exe') @(
   (MkR2Url 'vcredist' 'vc_redist.x64.exe'),
