@@ -1,0 +1,4 @@
+.DS_Store
+.env.r2
+**/packages/*
+!**/packages/.gitkeep
