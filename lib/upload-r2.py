@@ -252,18 +252,6 @@ def upload_scripts_zip() -> None:
         cache_control="no-cache, no-store, must-revalidate",
     )
     print(f"    {public.rstrip('/')}/install.zip")
-    for key in ("scripts.zip", "scripts-win.zip"):
-        put_object(
-            host,
-            bucket,
-            key,
-            dest,
-            access,
-            secret,
-            content_type="application/zip",
-            cache_control="no-cache, no-store, must-revalidate",
-        )
-        print(f"    {public.rstrip('/')}/{key}")
 
 
 def main() -> None:
