@@ -5,31 +5,34 @@
 
 if (-not $ApiKey) { $ApiKey = Read-Host 'ApiKey' }
 if (-not $PSBoundParameters.ContainsKey('BaseUrl')) {
-  $BaseUrl = Read-Host 'BaseUrl（没有直接回车）'
+  $BaseUrl = Read-Host 'BaseUrl (empty=skip)'
 }
-if (-not $ApiKey) { throw 'ApiKey 必填' }
+if (-not $ApiKey) { throw 'ApiKey required' }
 
 $dir = Join-Path $env:USERPROFILE '.claude'
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
+$jsonPath = Join-Path $dir 'settings.json'
 if ($BaseUrl) {
-  @"
+  $text = @"
 {
   "env": {
     "ANTHROPIC_API_KEY": "$ApiKey",
     "ANTHROPIC_BASE_URL": "$BaseUrl"
   }
 }
-"@ | Set-Content -Encoding UTF8 (Join-Path $dir 'settings.json')
+"@
 } else {
-  @"
+  $text = @"
 {
   "env": {
     "ANTHROPIC_API_KEY": "$ApiKey"
   }
 }
-"@ | Set-Content -Encoding UTF8 (Join-Path $dir 'settings.json')
+"@
 }
-Write-Host "==> 已写 $dir\settings.json"
+$enc = New-Object System.Text.UTF8Encoding $false
+[IO.File]::WriteAllText($jsonPath, $text, $enc)
+Write-Host "==> wrote $jsonPath"
 
 [Environment]::SetEnvironmentVariable('ANTHROPIC_API_KEY', $ApiKey, 'User')
 $env:ANTHROPIC_API_KEY = $ApiKey
@@ -37,4 +40,4 @@ if ($BaseUrl) {
   [Environment]::SetEnvironmentVariable('ANTHROPIC_BASE_URL', $BaseUrl, 'User')
   $env:ANTHROPIC_BASE_URL = $BaseUrl
 }
-Write-Host "==> 已设置用户环境变量（不打印 key）。新开 PowerShell 后 claude"
+Write-Host '==> user env set (key not printed). open a new PowerShell then run claude'

@@ -1,7 +1,8 @@
-﻿# Codex CLI for Windows. No Node. Local / R2 first, then GitHub mirrors.
+﻿# Codex CLI. PS 5.1. No Node.
 param([string]$PackagesDir)
 $ErrorActionPreference = 'Stop'
-$Root = Split-Path $PSScriptRoot -Parent
+if (-not $PSScriptRoot) { throw 'Run with powershell.exe -File' }
+$Root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $Root 'lib\common.ps1')
 MkUsePackagesDir $PackagesDir
 $ver = Get-Versions
@@ -9,7 +10,7 @@ $tag = $ver['CODEX_TAG']
 $plat = Get-PlatformId
 
 if (Test-Have 'codex') {
-  Write-Log "codex already installed"
+  Write-Log 'codex already installed'
   exit 0
 }
 
@@ -21,38 +22,42 @@ $zip = MkEnsurePackage -App 'codex' -File $asset -Urls (MkGitHubUrls $rel)
 if (-not $zip) { throw "Codex CLI download failed. Put $asset in codex\packages" }
 
 $stage = Join-Path $env:TEMP 'mk-codex-extract'
-if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
+if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
 MkExpandZip $zip $stage
-$src = Get-ChildItem -Path $stage -Recurse -Include 'codex.exe','codex-*.exe' | Select-Object -First 1
-if (-not $src) { throw "zip has no exe" }
+$src = Get-ChildItem -LiteralPath $stage -Recurse -ErrorAction SilentlyContinue |
+  Where-Object { $_.Name -eq 'codex.exe' -or $_.Name -like 'codex-*.exe' } |
+  Select-Object -First 1
+if (-not $src) { throw 'zip has no exe' }
 
 $bin = Get-UserBin
-Copy-Item -Force $src.FullName (Join-Path $bin 'codex.exe')
+Copy-Item -Force -LiteralPath $src.FullName -Destination (Join-Path $bin 'codex.exe')
 Add-UserPath $bin
 
 $vc = Join-Path $Root 'vcredist\install.ps1'
-if (Test-Path $vc) {
-  Write-Log "check VC++"
-  try { & $vc -PackagesDir $PackagesDir } catch { Write-Warn $_ }
+if (Test-Path -LiteralPath $vc) {
+  Write-Log 'check VC++'
+  try { & $vc -PackagesDir $PackagesDir } catch { Write-Warn "$_" }
 }
 
 $sbName = 'codex-windows-sandbox-setup-x86_64-pc-windows-msvc.exe.zip'
 $sbRel = "openai/codex/releases/download/$tag/$sbName"
 $sbZip = MkEnsurePackage -App 'codex' -File $sbName -Urls (MkGitHubUrls $sbRel)
 if ($sbZip) {
-  Write-Log "install Windows sandbox helper"
+  Write-Log 'install Windows sandbox helper'
   $sbStage = Join-Path $env:TEMP 'mk-codex-sandbox'
-  if (Test-Path $sbStage) { Remove-Item -Recurse -Force $sbStage }
+  if (Test-Path -LiteralPath $sbStage) { Remove-Item -LiteralPath $sbStage -Recurse -Force }
   MkExpandZip $sbZip $sbStage
-  $sbExe = Get-ChildItem $sbStage -Recurse -Filter '*.exe' | Select-Object -First 1
+  $sbExe = Get-ChildItem -LiteralPath $sbStage -Recurse -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -like '*.exe' } |
+    Select-Object -First 1
   if ($sbExe) {
-    try { Start-Process -FilePath $sbExe.FullName -Wait } catch { Write-Warn $_ }
+    try { Start-Process -FilePath $sbExe.FullName -Wait } catch { Write-Warn "$_" }
   }
 }
 
 if (-not (Test-Have 'codex')) {
-  Write-Warn "codex.exe is in $bin . Open a new PowerShell, run: codex --version"
+  Write-Warn "codex.exe is in $bin . Open a new PowerShell: codex --version"
 } else {
-  Write-Log "codex is on PATH"
+  Write-Log 'codex is on PATH'
 }
-Write-Log "next: double-click configure-codex.bat"
+Write-Log 'next: double-click configure-codex.bat'

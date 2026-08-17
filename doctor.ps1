@@ -1,4 +1,5 @@
 ﻿$ErrorActionPreference = 'Stop'
+if (-not $PSScriptRoot) { throw 'Run with powershell.exe -File' }
 $Root = $PSScriptRoot
 . (Join-Path $Root 'lib\common.ps1')
 Write-Log ("OS=" + [Environment]::OSVersion.VersionString + " " + (Get-PlatformId))

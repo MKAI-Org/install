@@ -1,7 +1,8 @@
-﻿# Claude Code CLI for Windows. No Node. Git recommended.
+﻿# Claude Code CLI. PS 5.1. No Node. Git recommended.
 param([string]$PackagesDir)
 $ErrorActionPreference = 'Stop'
-$Root = Split-Path $PSScriptRoot -Parent
+if (-not $PSScriptRoot) { throw 'Run with powershell.exe -File' }
+$Root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $Root 'lib\common.ps1')
 MkUsePackagesDir $PackagesDir
 $ver = Get-Versions
@@ -17,8 +18,8 @@ if (Test-Have 'claude') {
 if (-not (Test-Have 'git')) {
   Write-Warn "no git, running git\install.ps1"
   $git = Join-Path $Root 'git\install.ps1'
-  if (Test-Path $git) {
-    try { & $git -PackagesDir $PackagesDir } catch { Write-Warn $_ }
+  if (Test-Path -LiteralPath $git) {
+    try { & $git -PackagesDir $PackagesDir } catch { Write-Warn "$_" }
   }
 }
 
@@ -40,12 +41,12 @@ if (-not $src) {
 if (-not $src) { throw "Claude Code download failed. Put the file in claude-code\packages" }
 
 $bin = Get-UserBin
-Copy-Item -Force $src (Join-Path $bin 'claude.exe')
+Copy-Item -Force -LiteralPath $src -Destination (Join-Path $bin 'claude.exe')
 Add-UserPath $bin
 
 $official = Join-Path $env:USERPROFILE '.local\bin'
 New-Item -ItemType Directory -Force -Path $official | Out-Null
-Copy-Item -Force (Join-Path $bin 'claude.exe') (Join-Path $official 'claude.exe')
+Copy-Item -Force -LiteralPath (Join-Path $bin 'claude.exe') -Destination (Join-Path $official 'claude.exe')
 Add-UserPath $official
 
 if (-not (Test-Have 'claude')) {

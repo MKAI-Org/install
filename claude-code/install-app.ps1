@@ -1,9 +1,11 @@
-﻿# Claude desktop for Windows. Downloads Claude.msix from R2.
+﻿# Claude desktop. PS 5.1. MSIX needs Administrator (UAC).
 param([string]$PackagesDir)
 $ErrorActionPreference = 'Stop'
-$Root = Split-Path $PSScriptRoot -Parent
+if (-not $PSScriptRoot) { throw 'Run with powershell.exe -File' }
+$Root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $Root 'lib\common.ps1')
 MkUsePackagesDir $PackagesDir
+MkEnsureAdmin
 
 $setup = MkFindPackageGlob 'claude-code' 'Claude-Setup*.exe'
 if (-not $setup) { $setup = MkFindPackageGlob 'claude-code' 'Claude Setup*.exe' }
@@ -11,7 +13,7 @@ if (-not $setup) { $setup = MkFindPackage 'claude-code' 'Claude-Setup.exe' }
 if ($setup) {
   Write-Log "run $setup"
   Start-Process -FilePath $setup -Wait
-  Write-Log "login with the customer's Claude account"
+  Write-Log 'login with the customer Claude account'
   exit 0
 }
 
@@ -22,8 +24,7 @@ if (-not $msix) {
     'https://claude.ai/api/desktop/win32/x64/msix/latest/redirect'
   )
 }
-if (-not $msix) { throw "Claude desktop download failed" }
+if (-not $msix) { throw 'Claude desktop download failed' }
 
-Write-Log "install $msix"
-Add-AppxPackage -Path $msix
-Write-Log "desktop app installed. login with the customer's Claude account"
+MkInstallMsix $msix
+Write-Log 'desktop app installed. login with the customer Claude account'

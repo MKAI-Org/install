@@ -1,7 +1,8 @@
-﻿# Git for Windows via MinGit zip. Local / R2 first.
+﻿# Git for Windows MinGit. PS 5.1.
 param([string]$PackagesDir)
 $ErrorActionPreference = 'Stop'
-$Root = Split-Path $PSScriptRoot -Parent
+if (-not $PSScriptRoot) { throw 'Run with powershell.exe -File' }
+$Root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $Root 'lib\common.ps1')
 MkUsePackagesDir $PackagesDir
 $ver = Get-Versions
@@ -19,11 +20,9 @@ $zip = MkEnsurePackage -App 'git' -File $zipName -Urls (MkGitHubUrls $rel)
 if (-not $zip) { throw "Git download failed. Put $zipName in git\packages" }
 
 $dest = Join-Path $env:LOCALAPPDATA 'Programs\MinGit'
-if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force }
 MkExpandZip $zip $dest
-$cmd = Join-Path $dest 'cmd'
-Add-UserPath $cmd
-if (Test-Path (Join-Path $dest 'usr\bin')) {
-  Add-UserPath (Join-Path $dest 'usr\bin')
-}
+Add-UserPath (Join-Path $dest 'cmd')
+$usr = Join-Path $dest 'usr\bin'
+if (Test-Path -LiteralPath $usr) { Add-UserPath $usr }
 Write-Log "Git -> $dest"

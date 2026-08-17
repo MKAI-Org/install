@@ -3,7 +3,7 @@
 ## Windows
 
 解压后双击 `install.bat`（装命令行）。配 key 双击 `configure-codex.bat` / `configure-claude.bat`。
-不要双击 `install-app.bat`（那是桌面客户端，国内经常没有安装包）。
+桌面客户端双击 `install-app.bat`，会弹 UAC，点是。
 
 下脚本（不含安装包）：
 

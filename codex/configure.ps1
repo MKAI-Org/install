@@ -15,7 +15,7 @@ if (-not $ApiKey -or -not $BaseUrl -or -not $Model) { throw 'ApiKey / BaseUrl / 
 $codexHome = Join-Path $env:USERPROFILE '.codex'
 New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
 $cfg = Join-Path $codexHome 'config.toml'
-@"
+$text = @"
 model = "$Model"
 model_provider = "$Provider"
 
@@ -24,8 +24,10 @@ name = "$Provider"
 base_url = "$BaseUrl"
 env_key = "OPENAI_API_KEY"
 wire_api = "$WireApi"
-"@ | Set-Content -Encoding UTF8 $cfg
-Write-Host "==> 已写 $cfg"
+"@
+$enc = New-Object System.Text.UTF8Encoding $false
+[IO.File]::WriteAllText($cfg, $text, $enc)
+Write-Host "==> wrote $cfg"
 
 [Environment]::SetEnvironmentVariable('OPENAI_API_KEY', $ApiKey, 'User')
 $env:OPENAI_API_KEY = $ApiKey

@@ -1,7 +1,8 @@
-﻿# Microsoft VC++ Redistributable x64/arm64. Needs admin.
+﻿# VC++ redistributable. PS 5.1. May show UAC.
 param([string]$PackagesDir)
 $ErrorActionPreference = 'Stop'
-$Root = Split-Path $PSScriptRoot -Parent
+if (-not $PSScriptRoot) { throw 'Run with powershell.exe -File' }
+$Root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $Root 'lib\common.ps1')
 MkUsePackagesDir $PackagesDir
 
