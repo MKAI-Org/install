@@ -1,7 +1,13 @@
 param(
-  [Parameter(Mandatory = $true)][string]$ApiKey,
+  [string]$ApiKey,
   [string]$BaseUrl = ''
 )
+
+if (-not $ApiKey) { $ApiKey = Read-Host 'ApiKey' }
+if (-not $PSBoundParameters.ContainsKey('BaseUrl')) {
+  $BaseUrl = Read-Host 'BaseUrl（没有直接回车）'
+}
+if (-not $ApiKey) { throw 'ApiKey 必填' }
 
 $dir = Join-Path $env:USERPROFILE '.claude'
 New-Item -ItemType Directory -Force -Path $dir | Out-Null

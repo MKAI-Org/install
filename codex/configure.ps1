@@ -1,11 +1,16 @@
 # Configure Codex API key. Does not install.
 param(
-  [Parameter(Mandatory = $true)][string]$ApiKey,
-  [Parameter(Mandatory = $true)][string]$BaseUrl,
-  [Parameter(Mandatory = $true)][string]$Model,
+  [string]$ApiKey,
+  [string]$BaseUrl,
+  [string]$Model,
   [string]$WireApi = 'chat',
   [string]$Provider = 'custom'
 )
+
+if (-not $ApiKey) { $ApiKey = Read-Host 'ApiKey' }
+if (-not $BaseUrl) { $BaseUrl = Read-Host 'BaseUrl' }
+if (-not $Model) { $Model = Read-Host 'Model' }
+if (-not $ApiKey -or -not $BaseUrl -or -not $Model) { throw 'ApiKey / BaseUrl / Model 都要填' }
 
 $codexHome = Join-Path $env:USERPROFILE '.codex'
 New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
