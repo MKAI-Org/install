@@ -247,17 +247,29 @@ function MkInstallMsix([string]$Msix) {
   if (-not (Get-Command Add-AppxPackage -ErrorAction SilentlyContinue)) {
     throw 'Need Windows 10+ (Add-AppxPackage missing)'
   }
-  Write-Log ("install " + $Msix)
-  $err = $null
-  try {
-    Add-AppxPackage -LiteralPath $Msix
-    return
-  } catch {
-    $err = $_
-    Write-Warn $err.Exception.Message
+  if (-not (Test-Path -LiteralPath $Msix)) { throw "msix missing: $Msix" }
+
+  $safeDir = Join-Path $env:TEMP 'mk-msix'
+  New-Item -ItemType Directory -Force -Path $safeDir | Out-Null
+  $safe = Join-Path $safeDir ([IO.Path]::GetFileName($Msix))
+  Copy-Item -LiteralPath $Msix -Destination $safe -Force
+  Write-Log ("install " + $safe)
+
+  $cmd = Get-Command Add-AppxPackage
+  $ok = $false
+  if ($cmd.Parameters.ContainsKey('LiteralPath')) {
+    try { Add-AppxPackage -LiteralPath $safe; $ok = $true } catch { }
   }
-  Write-Log 'retry as provisioned package (all users)'
-  Add-AppxProvisionedPackage -Online -PackagePath $Msix -SkipLicense | Out-Null
+  if (-not $ok) {
+    try { Add-AppxPackage -Path $safe; $ok = $true } catch { }
+  }
+  if ($ok) { return }
+
+  if (-not (Get-Command Add-AppxProvisionedPackage -ErrorAction SilentlyContinue)) {
+    throw 'Add-AppxPackage failed and Add-AppxProvisionedPackage is missing'
+  }
+  Write-Log 'Add-AppxPackage failed, try provisioned package (all users)'
+  Add-AppxProvisionedPackage -Online -PackagePath $safe -SkipLicense | Out-Null
 }
 
 $script:MkCommonLoaded = $true
