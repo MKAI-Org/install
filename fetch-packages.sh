@@ -69,6 +69,9 @@ fi
 pull "$ROOT/claude-code/packages/Claude.dmg" \
   "$(r2_url claude-code Claude.dmg)" \
   "https://claude.ai/api/desktop/darwin/universal/dmg/latest/redirect"
+pull "$ROOT/claude-code/packages/Claude.msix" \
+  "$(r2_url claude-code Claude.msix)" \
+  "https://claude.ai/api/desktop/win32/x64/msix/latest/redirect"
 
 log "Node $NODE_VERSION"
 for f in \

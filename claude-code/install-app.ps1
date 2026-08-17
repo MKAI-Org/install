@@ -1,4 +1,4 @@
-﻿# Claude desktop for Windows. CLI is install.bat / install.ps1.
+﻿# Claude desktop for Windows. Downloads Claude.msix from R2.
 param([string]$PackagesDir)
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
@@ -15,7 +15,15 @@ if ($setup) {
   exit 0
 }
 
-Write-Warn "No Claude desktop installer in packages."
-Write-Warn "For CLI (recommended): go up one folder and double-click install.bat"
-Write-Warn "Or put Claude-Setup.exe into claude-code\packages and run this again."
-exit 1
+$msix = MkFindPackageGlob 'claude-code' '*.msix'
+if (-not $msix) { $msix = MkFindPackage 'claude-code' 'Claude.msix' }
+if (-not $msix) {
+  $msix = MkEnsurePackage -App 'claude-code' -File 'Claude.msix' -Urls @(
+    'https://claude.ai/api/desktop/win32/x64/msix/latest/redirect'
+  )
+}
+if (-not $msix) { throw "Claude desktop download failed" }
+
+Write-Log "install $msix"
+Add-AppxPackage -Path $msix
+Write-Log "desktop app installed. login with the customer's Claude account"
