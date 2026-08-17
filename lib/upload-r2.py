@@ -201,11 +201,6 @@ def main() -> None:
     if not files:
         die("没有 packages 文件")
     bucket = env.get("R2_BUCKET") or "install"
-    try:
-        names = list_buckets(host, access, secret)
-        bucket = pick_bucket(names, bucket)
-    except SystemExit:
-        print(f"==> ListBuckets 不可用，使用 bucket {bucket}")
     print(f"==> bucket {bucket}  ({len(files)} files)")
     for key, path in files:
         size = path.stat().st_size

@@ -155,7 +155,7 @@ download() {
   for url in "$@"; do
     [[ -n "$url" ]] || continue
     log "下载 $url"
-    if curl -fL --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 600 -o "$dest.part" "$url"; then
+    if curl -fL -A 'mk-install/1' --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 600 -o "$dest.part" "$url"; then
       mv "$dest.part" "$dest"
       return 0
     fi

@@ -117,7 +117,7 @@ function Save-Download {
     Write-Log "下载 $url"
     try {
       $tmp = "$Dest.part"
-      Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 600
+      Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 600 -UserAgent 'mk-install/1'
       Move-Item -Force $tmp $Dest
       return $true
     } catch {
