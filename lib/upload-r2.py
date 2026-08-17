@@ -144,17 +144,50 @@ def put_object(
     file: Path,
     access_key: str,
     secret: str,
+    content_type: str = "application/octet-stream",
+    cache_control: str = "public, max-age=86400",
 ) -> None:
     path = "/" + urllib.parse.quote(f"{bucket}/{key}")
     extra = {
-        "content-type": "application/octet-stream",
-        "cache-control": "public, max-age=86400",
+        "content-type": content_type,
+        "cache-control": cache_control,
     }
     status, data = request(
         host, "PUT", path, secret, access_key, body_file=file, extra=extra
     )
     if status not in (200, 201):
         die(f"PUT {key} HTTP {status}: {data[:400]!r}")
+
+
+SKIP_DIR_NAMES = {".git", "__pycache__", "dist"}
+SKIP_FILE_NAMES = {".env.r2", ".DS_Store", "install.zip"}
+
+
+def should_skip(path: Path) -> bool:
+    rel = path.relative_to(ROOT)
+    parts = rel.parts
+    if any(p in SKIP_DIR_NAMES for p in parts):
+        return True
+    if path.name in SKIP_FILE_NAMES:
+        return True
+    if "packages" in parts and path.name != ".gitkeep":
+        return True
+    return False
+
+
+def build_scripts_zip(dest: Path) -> Path:
+    import zipfile
+
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        dest.unlink()
+    with zipfile.ZipFile(dest, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(ROOT.rglob("*")):
+            if not path.is_file() or should_skip(path):
+                continue
+            arc = Path("install") / path.relative_to(ROOT)
+            zf.write(path, arc.as_posix())
+    return dest
 
 
 def iter_packages() -> list[tuple[str, Path]]:
@@ -185,7 +218,7 @@ def pick_bucket(names: list[str], preferred: str) -> str:
     die("多个 bucket，请在 .env.r2 里写 R2_BUCKET=")
 
 
-def main() -> None:
+def r2_creds() -> tuple[str, str, str, str, str]:
     env = load_env()
     access = env.get("R2_ACCESS_KEY_ID") or ""
     secret = env.get("R2_SECRET_ACCESS_KEY") or ""
@@ -197,10 +230,39 @@ def main() -> None:
     if not access or not secret or not endpoint:
         die("缺少 R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_ENDPOINT（写在 .env.r2）")
     host = urllib.parse.urlparse(endpoint).netloc
+    bucket = env.get("R2_BUCKET") or "install"
+    return host, bucket, access, secret, public
+
+
+def upload_scripts_zip() -> None:
+    host, bucket, access, secret, public = r2_creds()
+    dest = ROOT / "dist" / "install.zip"
+    print("==> 打包脚本（不含 packages）")
+    build_scripts_zip(dest)
+    size = dest.stat().st_size
+    print(f"==> 上传 install.zip  ({size / 1024:.0f} KB)")
+    put_object(
+        host,
+        bucket,
+        "install.zip",
+        dest,
+        access,
+        secret,
+        content_type="application/zip",
+        cache_control="public, max-age=60",
+    )
+    print(f"    {public.rstrip('/')}/install.zip")
+
+
+def main() -> None:
+    if "--scripts-zip" in sys.argv:
+        upload_scripts_zip()
+        print("==> 完成")
+        return
+    host, bucket, access, secret, public = r2_creds()
     files = iter_packages()
     if not files:
         die("没有 packages 文件")
-    bucket = env.get("R2_BUCKET") or "install"
     print(f"==> bucket {bucket}  ({len(files)} files)")
     for key, path in files:
         size = path.stat().st_size

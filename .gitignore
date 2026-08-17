@@ -2,3 +2,5 @@
 .env.r2
 **/packages/*
 !**/packages/.gitkeep
+/install.zip
+/dist/

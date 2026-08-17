@@ -1,6 +1,20 @@
 # 安装命令
 
-有网：脚本从 `https://dl.mkstore.life` 下包。
+客户有网，先下脚本（不含安装包）：
+
+```powershell
+curl.exe -L -o install.zip https://dl.mkstore.life/install.zip
+tar -xf install.zip
+cd install
+```
+
+```bash
+curl -fL -o install.zip https://dl.mkstore.life/install.zip
+unzip install.zip && cd install
+```
+
+然后跑下面的安装命令，包会从 `https://dl.mkstore.life` 拉。
+
 没网：把包放到对应 `*/packages/`，或指定目录。
 
 ```bash
@@ -10,8 +24,6 @@ MK_PACKAGES=/U盘路径 ./codex/install.sh
 ```powershell
 .\codex\install.ps1 -PackagesDir D:\pkgs
 ```
-
-先 `cd` 进 `install` 目录。
 
 ## Windows（PowerShell）
 
