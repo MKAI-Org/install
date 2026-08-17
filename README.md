@@ -2,12 +2,13 @@
 
 ## Windows
 
-解压后双击 `install.bat`。配 key 双击 `configure-codex.bat` / `configure-claude.bat`。
+解压后双击 `install.bat`（装命令行）。配 key 双击 `configure-codex.bat` / `configure-claude.bat`。
+不要双击 `install-app.bat`（那是桌面客户端，国内经常没有安装包）。
 
 下脚本（不含安装包）：
 
 ```powershell
-curl.exe -L -o install.zip https://dl.mkstore.life/scripts.zip
+curl.exe -L -o install.zip https://dl.mkstore.life/scripts-win.zip
 tar -xf install.zip
 cd install
 ```

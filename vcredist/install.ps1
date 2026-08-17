@@ -1,8 +1,9 @@
-# Microsoft VC++ Redistributable x64/arm64. Needs admin. Silent if possible.
+﻿# Microsoft VC++ Redistributable x64/arm64. Needs admin.
 param([string]$PackagesDir)
+$ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
-. "$Root\lib\common.ps1"
-Use-PackagesDir $PackagesDir
+. (Join-Path $Root 'lib\common.ps1')
+MkUsePackagesDir $PackagesDir
 
 $plat = Get-PlatformId
 if ($plat -eq 'windows-arm64') {
@@ -13,13 +14,13 @@ if ($plat -eq 'windows-arm64') {
   $url = 'https://aka.ms/vs/17/release/vc_redist.x64.exe'
 }
 
-$exe = Ensure-Package -App 'vcredist' -File $name -Urls @($url)
-if (-not $exe) { throw "VC++ 下载失败。没网就把 $name 放到 vcredist\packages 或 -PackagesDir" }
+$exe = MkEnsurePackage -App 'vcredist' -File $name -Urls @($url)
+if (-not $exe) { throw "VC++ download failed. Put $name in vcredist\packages" }
 
-Write-Log "安装 VC++ 运行库（可能弹出 UAC）"
+Write-Log "install VC++ (UAC may pop)"
 $p = Start-Process -FilePath $exe -ArgumentList '/install','/quiet','/norestart' -Wait -PassThru
 if ($p.ExitCode -ne 0 -and $p.ExitCode -ne 1638 -and $p.ExitCode -ne 3010) {
-  Write-Warn "静默安装失败 exit=$($p.ExitCode)。双击 $exe 手动装。"
+  Write-Warn "silent install failed exit=$($p.ExitCode). Double-click $exe"
   exit $p.ExitCode
 }
-Write-Log "VC++ 运行库 OK"
+Write-Log "VC++ OK"

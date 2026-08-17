@@ -1,8 +1,9 @@
-# Node 22. Local packages / MK_PACKAGES first, then R2, then npmmirror.
+﻿# Node 22. Local packages / MK_PACKAGES first, then R2, then npmmirror.
 param([string]$PackagesDir)
+$ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
-. "$Root\lib\common.ps1"
-Use-PackagesDir $PackagesDir
+. (Join-Path $Root 'lib\common.ps1')
+MkUsePackagesDir $PackagesDir
 $ver = Get-Versions
 $NODE_VERSION = $ver['NODE_VERSION']
 
@@ -19,7 +20,7 @@ $plat = Get-PlatformId
 if ($plat -eq 'windows-arm64') { $zipName = "node-v$NODE_VERSION-win-arm64.zip" }
 else { $zipName = "node-v$NODE_VERSION-win-x64.zip" }
 
-$zip = Ensure-Package -App 'node' -File $zipName -Urls @(
+$zip = MkEnsurePackage -App 'node' -File $zipName -Urls @(
   "https://npmmirror.com/mirrors/node/v$NODE_VERSION/$zipName",
   "https://cdn.npmmirror.com/binaries/node/v$NODE_VERSION/$zipName",
   "https://nodejs.org/dist/v$NODE_VERSION/$zipName"
@@ -30,7 +31,7 @@ $dest = Join-Path $env:LOCALAPPDATA "Programs\node-v$NODE_VERSION"
 if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
 $stage = Join-Path $env:TEMP "mk-node-extract"
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
-Expand-ZipTo $zip $stage
+MkExpandZip $zip $stage
 $inner = Get-ChildItem $stage | Select-Object -First 1
 Move-Item $inner.FullName $dest
 Add-UserPath $dest

@@ -1,4 +1,4 @@
-# Shared helpers. Dot-source from each app: . "$Root\lib\common.ps1"
+﻿# Shared helpers. Dot-source from each app: . "$Root\lib\common.ps1"
 $ErrorActionPreference = 'Stop'
 
 function Write-Log([string]$Message) { Write-Host "==> $Message" }
@@ -24,7 +24,7 @@ function Add-UserPath([string]$Bin) {
   if ($user -notlike "*$Bin*") {
     $new = (@($Bin) + $parts) -join ';'
     [Environment]::SetEnvironmentVariable('Path', $new, 'User')
-    Write-Log "已加入用户 PATH: $Bin （新开 PowerShell 生效）"
+    Write-Log "PATH added: $Bin (open a new PowerShell)"
   }
   if ($env:Path -notlike "*$Bin*") {
     $env:Path = "$Bin;$env:Path"
@@ -34,20 +34,20 @@ function Add-UserPath([string]$Bin) {
 function Get-Versions {
   $file = Join-Path $Root 'lib\versions.env'
   $map = @{}
-  Get-Content $file | ForEach-Object {
+  Get-Content -LiteralPath $file | ForEach-Object {
     if ($_ -match '^([A-Z0-9_]+)=(.*)$') { $map[$matches[1]] = $matches[2] }
   }
   return $map
 }
 
-function Get-R2Url([string]$App, [string]$File) {
+function MkR2Url([string]$App, [string]$File) {
   $ver = Get-Versions
   $base = $ver['R2_BASE']
   if (-not $base) { $base = 'https://dl.mkstore.life' }
   return "$($base.TrimEnd('/'))/$App/$File"
 }
 
-function Get-PackageSearchDirs([string]$App) {
+function MkSearchDirs([string]$App) {
   $dirs = New-Object System.Collections.Generic.List[string]
   $extra = $env:MK_PACKAGES
   if ($extra) {
@@ -81,30 +81,30 @@ function Get-PackageSearchDirs([string]$App) {
   return $dirs
 }
 
-function Find-LocalPackage([string]$Dir, [string]$Pattern) {
-  if (-not (Test-Path $Dir)) { return $null }
-  $hit = Get-ChildItem -Path $Dir -Filter $Pattern -ErrorAction SilentlyContinue | Select-Object -First 1
+function MkFindLocal([string]$Dir, [string]$Pattern) {
+  if (-not (Test-Path -LiteralPath $Dir)) { return $null }
+  $hit = Get-ChildItem -LiteralPath $Dir -Filter $Pattern -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($hit) { return $hit.FullName }
   return $null
 }
 
-function Find-PackageFile([string]$App, [string]$File) {
-  foreach ($d in Get-PackageSearchDirs $App) {
+function MkFindPackage([string]$App, [string]$File) {
+  foreach ($d in MkSearchDirs $App) {
     $p = Join-Path $d $File
     if (Test-Path -LiteralPath $p) { return $p }
   }
   return $null
 }
 
-function Find-PackageGlob([string]$App, [string]$Pattern) {
-  foreach ($d in Get-PackageSearchDirs $App) {
-    $hit = Find-LocalPackage $d $Pattern
+function MkFindPackageGlob([string]$App, [string]$Pattern) {
+  foreach ($d in MkSearchDirs $App) {
+    $hit = MkFindLocal $d $Pattern
     if ($hit) { return $hit }
   }
   return $null
 }
 
-function Save-Download {
+function MkDownload {
   param(
     [Parameter(Mandatory = $true)][string]$Dest,
     [Parameter(Mandatory = $true)][string[]]$Urls
@@ -114,39 +114,39 @@ function Save-Download {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   foreach ($url in $Urls) {
     if (-not $url) { continue }
-    Write-Log "下载 $url"
+    Write-Log "download $url"
     try {
       $tmp = "$Dest.part"
       Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 600 -UserAgent 'mk-install/1'
       Move-Item -Force $tmp $Dest
       return $true
     } catch {
-      Write-Warn "失败: $url"
+      Write-Warn "fail: $url"
       Remove-Item -Force "$Dest.part" -ErrorAction SilentlyContinue
     }
   }
   return $false
 }
 
-function Ensure-Package {
+function MkEnsurePackage {
   param(
     [Parameter(Mandatory = $true)][string]$App,
     [Parameter(Mandatory = $true)][string]$File,
     [string[]]$Urls = @()
   )
-  $hit = Find-PackageFile $App $File
+  $hit = MkFindPackage $App $File
   if ($hit) {
-    Write-Log "本地包 $hit"
+    Write-Log "local $hit"
     return $hit
   }
   $dest = Join-Path $Root "$App\packages\$File"
-  $all = @((Get-R2Url $App $File) + @($Urls))
-  $ok = Save-Download -Dest $dest -Urls $all
+  $all = @((MkR2Url $App $File) + @($Urls))
+  $ok = MkDownload -Dest $dest -Urls $all
   if (-not $ok) { return $null }
   return $dest
 }
 
-function Get-GitHubUrls([string]$Path) {
+function MkGitHubUrls([string]$Path) {
   return @(
     "https://ghfast.top/https://github.com/$Path",
     "https://gh-proxy.com/https://github.com/$Path",
@@ -155,11 +155,13 @@ function Get-GitHubUrls([string]$Path) {
   )
 }
 
-function Expand-ZipTo([string]$Zip, [string]$Dest) {
+function MkExpandZip([string]$Zip, [string]$Dest) {
   New-Item -ItemType Directory -Force -Path $Dest | Out-Null
   Expand-Archive -LiteralPath $Zip -DestinationPath $Dest -Force
 }
 
-function Use-PackagesDir([string]$PackagesDir) {
+function MkUsePackagesDir([string]$PackagesDir) {
   if ($PackagesDir) { $env:MK_PACKAGES = $PackagesDir }
 }
+
+$script:MkCommonLoaded = $true

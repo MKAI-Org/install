@@ -1,4 +1,4 @@
-# Configure Codex API key. Does not install.
+﻿# Configure Codex API key. Does not install.
 param(
   [string]$ApiKey,
   [string]$BaseUrl,

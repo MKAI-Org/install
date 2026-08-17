@@ -1,19 +1,21 @@
-# Claude desktop for Windows. Do not match claude.exe CLI.
+﻿# Claude desktop for Windows. CLI is install.bat / install.ps1.
 param([string]$PackagesDir)
+$ErrorActionPreference = 'Stop'
 $Root = Split-Path $PSScriptRoot -Parent
-. "$Root\lib\common.ps1"
-Use-PackagesDir $PackagesDir
+. (Join-Path $Root 'lib\common.ps1')
+MkUsePackagesDir $PackagesDir
 
-$setup = Find-PackageGlob 'claude-code' 'Claude-Setup*.exe'
-if (-not $setup) { $setup = Find-PackageGlob 'claude-code' 'Claude Setup*.exe' }
-if (-not $setup) { $setup = Find-PackageFile 'claude-code' 'Claude-Setup.exe' }
-if (-not $setup) {
-  $setup = Ensure-Package -App 'claude-code' -File 'Claude-Setup.exe' -Urls @(
-    'https://claude.ai/api/desktop/win32/x64/exe/latest/redirect'
-  )
+$setup = MkFindPackageGlob 'claude-code' 'Claude-Setup*.exe'
+if (-not $setup) { $setup = MkFindPackageGlob 'claude-code' 'Claude Setup*.exe' }
+if (-not $setup) { $setup = MkFindPackage 'claude-code' 'Claude-Setup.exe' }
+if ($setup) {
+  Write-Log "run $setup"
+  Start-Process -FilePath $setup -Wait
+  Write-Log "login with the customer's Claude account"
+  exit 0
 }
-if (-not $setup) { throw "桌面客户端下载失败。没网就把 Claude-Setup.exe 放到 claude-code\packages 或 -PackagesDir" }
 
-Write-Log "运行 $setup"
-Start-Process -FilePath $setup -Wait
-Write-Log "装完后用客户自己的 Claude 账号登录。CLI key 仍用 .\configure.ps1"
+Write-Warn "No Claude desktop installer in packages."
+Write-Warn "For CLI (recommended): go up one folder and double-click install.bat"
+Write-Warn "Or put Claude-Setup.exe into claude-code\packages and run this again."
+exit 1
